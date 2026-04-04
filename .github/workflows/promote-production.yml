@@ -1,0 +1,48 @@
+name: Promote Hostinger Staging To Live
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST || '109.106.250.190' }}
+      HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
+      HOSTINGER_USER: ${{ vars.HOSTINGER_USER || 'u514430741' }}
+      LIVE_ROOT: ${{ vars.LIVE_ROOT || 'public_html' }}
+      STAGING_SUBDIR: ${{ vars.STAGING_SUBDIR || 'test-git' }}
+      BACKUP_ROOT: ${{ vars.BACKUP_ROOT || 'hostinger_backups/battlestroke' }}
+      KEEP_BACKUPS: ${{ vars.KEEP_BACKUPS || '5' }}
+    steps:
+      - name: Validate required secret
+        run: |
+          if [ -z "${{ secrets.HOSTINGER_SSH_KEY }}" ]; then
+            echo "Missing required secret: HOSTINGER_SSH_KEY" >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${HOSTINGER_PORT}" "${HOSTINGER_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Promote staging to live with backup
+        run: |
+          chmod +x scripts/promote_hostinger_test_git.sh
+          HOSTINGER_HOST="${HOSTINGER_HOST}" \
+          HOSTINGER_PORT="${HOSTINGER_PORT}" \
+          HOSTINGER_USER="${HOSTINGER_USER}" \
+          LIVE_ROOT="${LIVE_ROOT}" \
+          STAGING_SUBDIR="${STAGING_SUBDIR}" \
+          BACKUP_ROOT="${BACKUP_ROOT}" \
+          KEEP_BACKUPS="${KEEP_BACKUPS}" \
+          scripts/promote_hostinger_test_git.sh --apply

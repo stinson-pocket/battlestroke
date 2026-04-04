@@ -13,6 +13,8 @@ HOSTINGER_USER="${HOSTINGER_USER:-u514430741}"
 LIVE_ROOT="${LIVE_ROOT:-public_html}"
 STAGING_SUBDIR="${STAGING_SUBDIR:-test-git}"
 STAGING_ROOT="${LIVE_ROOT}/${STAGING_SUBDIR}"
+BACKUP_ROOT="${BACKUP_ROOT:-hostinger_backups/battlestroke}"
+KEEP_BACKUPS="${KEEP_BACKUPS:-5}"
 
 WHITELIST=(
   "index.html"
@@ -38,7 +40,9 @@ set -euo pipefail
 apply_flag="$1"
 live_root="$2"
 staging_root="$3"
-shift 3
+backup_root="$4"
+keep_backups="$5"
+shift 5
 
 if [[ ! -d "$staging_root" ]]; then
   echo "Staging folder not found: $staging_root" >&2
@@ -47,6 +51,7 @@ fi
 
 echo "Live root: $live_root"
 echo "Staging root: $staging_root"
+echo "Backup root: $backup_root"
 echo
 echo "Whitelisted publish set:"
 for item in "$@"; do
@@ -72,6 +77,28 @@ if [[ "$apply_flag" != "1" ]]; then
   exit 0
 fi
 
+timestamp="$(date +%Y%m%d-%H%M%S)"
+backup_dir="$backup_root/$timestamp"
+mkdir -p "$backup_dir"
+
+echo "Creating backup in $backup_dir"
+for item in "$@"; do
+  src="$live_root/$item"
+  dst="$backup_dir/$item"
+
+  if [[ -d "$src" ]]; then
+    mkdir -p "$dst"
+    cp -a "$src"/. "$dst"/
+    echo "Backed up directory: $item"
+  elif [[ -f "$src" ]]; then
+    mkdir -p "$(dirname "$dst")"
+    cp -a "$src" "$dst"
+    echo "Backed up file: $item"
+  else
+    echo "No live copy to back up for: $item"
+  fi
+done
+
 for item in "$@"; do
   src="$staging_root/$item"
   dst="$live_root/$item"
@@ -87,6 +114,17 @@ for item in "$@"; do
   fi
 done
 
+if [[ -d "$backup_root" ]]; then
+  mapfile -t backup_dirs < <(find "$backup_root" -mindepth 1 -maxdepth 1 -type d | sort)
+  if (( ${#backup_dirs[@]} > keep_backups )); then
+    remove_count=$(( ${#backup_dirs[@]} - keep_backups ))
+    for (( i=0; i<remove_count; i++ )); do
+      rm -rf "${backup_dirs[$i]}"
+      echo "Removed old backup: ${backup_dirs[$i]}"
+    done
+  fi
+fi
+
 echo
 echo "Promotion complete."
 EOF
@@ -95,14 +133,15 @@ echo "BattleStroke Hostinger promote script"
 echo "Target server: ${SSH_TARGET}:${HOSTINGER_PORT}"
 echo "Live root: ${LIVE_ROOT}"
 echo "Staging root: ${STAGING_ROOT}"
+echo "Backup root: ${BACKUP_ROOT}"
 echo
 
 if [[ "${APPLY}" -eq 0 ]]; then
-  echo "Running in dry-run mode. Use --apply to copy files into the live root."
+  echo "Running in dry-run mode. Use --apply to create a backup and copy files into the live root."
 else
-  echo "Running in apply mode. Whitelisted files will be copied into the live root."
+  echo "Running in apply mode. Whitelisted files will be backed up and copied into the live root."
 fi
 
 ssh "${SSH_OPTS[@]}" "${SSH_TARGET}" \
-  "bash -s -- '${APPLY}' '${LIVE_ROOT}' '${STAGING_ROOT}'" -- \
+  "bash -s -- '${APPLY}' '${LIVE_ROOT}' '${STAGING_ROOT}' '${BACKUP_ROOT}' '${KEEP_BACKUPS}'" -- \
   "${WHITELIST[@]}" <<< "${REMOTE_SCRIPT}"
