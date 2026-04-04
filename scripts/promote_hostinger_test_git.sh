@@ -44,6 +44,17 @@ backup_root="$4"
 keep_backups="$5"
 shift 5
 
+resolve_path() {
+  case "$1" in
+    /*) printf '%s\n' "$1" ;;
+    *) printf '%s/%s\n' "$HOME" "$1" ;;
+  esac
+}
+
+live_root="$(resolve_path "$live_root")"
+staging_root="$(resolve_path "$staging_root")"
+backup_root="$(resolve_path "$backup_root")"
+
 if [[ ! -d "$staging_root" ]]; then
   echo "Staging folder not found: $staging_root" >&2
   exit 1
