@@ -44,6 +44,9 @@ backup_root="$4"
 keep_backups="$5"
 shift 5
 
+live_root_raw="$live_root"
+staging_root_raw="$staging_root"
+
 resolve_path() {
   local raw="$1"
   local candidate=""
@@ -69,9 +72,15 @@ resolve_path() {
   printf '%s\n' "$HOME/$raw"
 }
 
-live_root="$(resolve_path "$live_root")"
 staging_root="$(resolve_path "$staging_root")"
 backup_root="$(resolve_path "$backup_root")"
+
+if [[ "$live_root_raw" != /* && "$staging_root_raw" == "$live_root_raw/"* ]]; then
+  staging_suffix="${staging_root_raw#"$live_root_raw"/}"
+  live_root="${staging_root%"/$staging_suffix"}"
+else
+  live_root="$(resolve_path "$live_root")"
+fi
 
 if [[ ! -d "$staging_root" ]]; then
   echo "Staging folder not found: $staging_root" >&2
@@ -172,5 +181,5 @@ else
 fi
 
 ssh "${SSH_OPTS[@]}" "${SSH_TARGET}" \
-  "bash -s -- '${APPLY}' '${LIVE_ROOT}' '${STAGING_ROOT}' '${BACKUP_ROOT}' '${KEEP_BACKUPS}'" -- \
+  "bash -s -- '${APPLY}' '${LIVE_ROOT}' '${STAGING_ROOT}' '${BACKUP_ROOT}' '${KEEP_BACKUPS}'" \
   "${WHITELIST[@]}" <<< "${REMOTE_SCRIPT}"
