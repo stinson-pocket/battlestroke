@@ -45,10 +45,28 @@ keep_backups="$5"
 shift 5
 
 resolve_path() {
-  case "$1" in
-    /*) printf '%s\n' "$1" ;;
-    *) printf '%s/%s\n' "$HOME" "$1" ;;
-  esac
+  local raw="$1"
+  local candidate=""
+
+  if [[ "$raw" == /* ]]; then
+    printf '%s\n' "$raw"
+    return 0
+  fi
+
+  for candidate in "$raw" "$PWD/$raw" "$HOME/$raw"; do
+    if [[ -e "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  candidate="$(find "$HOME" -maxdepth 6 \( -type d -o -type f \) -path "*/$raw" 2>/dev/null | head -n 1 || true)"
+  if [[ -n "$candidate" ]]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+
+  printf '%s\n' "$HOME/$raw"
 }
 
 live_root="$(resolve_path "$live_root")"
