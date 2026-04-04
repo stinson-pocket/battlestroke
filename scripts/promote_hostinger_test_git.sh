@@ -153,14 +153,25 @@ for item in "$@"; do
 done
 
 if [[ -d "$backup_root" ]]; then
-  mapfile -t backup_dirs < <(find "$backup_root" -mindepth 1 -maxdepth 1 -type d | sort)
-  if (( ${#backup_dirs[@]} > keep_backups )); then
-    remove_count=$(( ${#backup_dirs[@]} - keep_backups ))
-    for (( i=0; i<remove_count; i++ )); do
-      rm -rf "${backup_dirs[$i]}"
-      echo "Removed old backup: ${backup_dirs[$i]}"
-    done
+  backup_list_file="$(mktemp)"
+  find "$backup_root" -mindepth 1 -maxdepth 1 -type d | sort > "$backup_list_file"
+
+  backup_count="$(wc -l < "$backup_list_file" | tr -d ' ')"
+  if (( backup_count > keep_backups )); then
+    remove_count=$(( backup_count - keep_backups ))
+    removed=0
+    while IFS= read -r old_backup; do
+      [[ -z "$old_backup" ]] && continue
+      rm -rf "$old_backup"
+      echo "Removed old backup: $old_backup"
+      removed=$(( removed + 1 ))
+      if (( removed >= remove_count )); then
+        break
+      fi
+    done < "$backup_list_file"
   fi
+
+  rm -f "$backup_list_file"
 fi
 
 echo
