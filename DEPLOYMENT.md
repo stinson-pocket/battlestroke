@@ -1,5 +1,7 @@
 # BattleStroke Deployment Flow
 
+This file is the source of truth for how BattleStroke is published. Future Codex instances should check this file before changing deployment or promotion behavior.
+
 ## Branches
 
 - `main`: staging content for Hostinger Git deployment into `public_html/test-git`
@@ -42,3 +44,5 @@ Optional repository variables if you ever need to override the defaults:
 - The promotion is whitelist-based and does not wipe unlisted live files
 - Draft pages are not promoted live
 - The workflow keeps the 5 most recent backups by default
+- Hostinger Git is expected to deploy `main` into the `test-git` install path
+- If deployment paths change, update both the workflow and `scripts/promote_hostinger_test_git.sh`
