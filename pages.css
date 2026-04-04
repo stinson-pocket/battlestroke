@@ -264,6 +264,29 @@ code {
   gap: 1rem;
 }
 
+.action-links {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.action-link {
+  display: block;
+  text-decoration: none;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-weight: 700;
+  border: 1px solid var(--line);
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+}
+
+.action-link:hover,
+.action-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(22, 99, 219, 0.14);
+}
+
 .faq-card {
   padding: 1.5rem 1.6rem;
   border-radius: var(--radius);
