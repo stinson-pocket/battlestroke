@@ -38,7 +38,9 @@ jobs:
 
       - name: Sync checkout to Hostinger staging
         run: |
-          tar -czf - \
+          archive_name="battlestroke-${GITHUB_SHA}.tgz"
+
+          tar -czf "${archive_name}" \
             index.html \
             about.html \
             faq.html \
@@ -50,9 +52,47 @@ jobs:
             pages.css \
             robots.txt \
             sitemap.xml \
-            assets \
-            | ssh -p "${HOSTINGER_PORT}" "${HOSTINGER_USER}@${HOSTINGER_HOST}" \
-              "mkdir -p '${LIVE_ROOT}/${STAGING_SUBDIR}' && tar -xzf - -C '${LIVE_ROOT}/${STAGING_SUBDIR}'"
+            assets
+
+          scp -P "${HOSTINGER_PORT}" "${archive_name}" "${HOSTINGER_USER}@${HOSTINGER_HOST}:${archive_name}"
+
+          ssh -p "${HOSTINGER_PORT}" "${HOSTINGER_USER}@${HOSTINGER_HOST}" \
+            "bash -s -- '${LIVE_ROOT}/${STAGING_SUBDIR}' '${archive_name}'" <<'EOF'
+          set -euo pipefail
+
+          staging_root_raw="$1"
+          archive_name="$2"
+
+          resolve_path() {
+            local raw="$1"
+            local candidate=""
+
+            if [[ "$raw" == /* ]]; then
+              printf '%s\n' "$raw"
+              return 0
+            fi
+
+            for candidate in "$raw" "$PWD/$raw" "$HOME/$raw"; do
+              if [[ -e "$candidate" ]]; then
+                printf '%s\n' "$candidate"
+                return 0
+              fi
+            done
+
+            candidate="$(find "$HOME" -maxdepth 6 \( -type d -o -type f \) -path "*/$raw" 2>/dev/null | head -n 1 || true)"
+            if [[ -n "$candidate" ]]; then
+              printf '%s\n' "$candidate"
+              return 0
+            fi
+
+            printf '%s\n' "$HOME/$raw"
+          }
+
+          staging_root="$(resolve_path "$staging_root_raw")"
+          mkdir -p "$staging_root"
+          tar -xzf "$HOME/$archive_name" -C "$staging_root"
+          rm -f "$HOME/$archive_name"
+          EOF
 
       - name: Promote staging to live with backup
         run: |
