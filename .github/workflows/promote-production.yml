@@ -13,7 +13,7 @@ jobs:
       HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST || '109.106.250.190' }}
       HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
       HOSTINGER_USER: ${{ vars.HOSTINGER_USER || 'u514430741' }}
-      LIVE_ROOT: ${{ vars.LIVE_ROOT || 'public_html' }}
+      LIVE_ROOT: ${{ vars.LIVE_ROOT || 'domains/battlestroke.com/public_html' }}
       STAGING_SUBDIR: ${{ vars.STAGING_SUBDIR || 'test-git' }}
       BACKUP_ROOT: ${{ vars.BACKUP_ROOT || 'hostinger_backups/battlestroke' }}
       KEEP_BACKUPS: ${{ vars.KEEP_BACKUPS || '5' }}

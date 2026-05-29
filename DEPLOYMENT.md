@@ -9,8 +9,8 @@ This file is the source of truth for how BattleStroke is published. Future Codex
 
 ## Hosting model
 
-- Live site root: `public_html`
-- Hostinger Git staging path: `public_html/test-git`
+- Live site root: `domains/battlestroke.com/public_html`
+- Hostinger Git staging path: `domains/battlestroke.com/public_html/test-git`
 - Backup location: `hostinger_backups/battlestroke`
 
 ## Publish flow
@@ -20,9 +20,9 @@ This file is the source of truth for how BattleStroke is published. Future Codex
 3. Review the staged site in `test-git`
 4. Merge `main` into `production`
 5. GitHub Actions connects to Hostinger over SSH
-6. The workflow syncs the checked-out production files into `public_html/test-git`
+6. The workflow syncs the checked-out production files into `domains/battlestroke.com/public_html/test-git`
 7. The workflow creates a timestamped backup of the current live whitelisted files
-8. The workflow promotes the staged copy from `public_html/test-git` into `public_html`
+8. The workflow promotes the staged copy from `domains/battlestroke.com/public_html/test-git` into `domains/battlestroke.com/public_html`
 
 ## GitHub setup required
 
