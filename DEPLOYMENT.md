@@ -20,8 +20,9 @@ This file is the source of truth for how BattleStroke is published. Future Codex
 3. Review the staged site in `test-git`
 4. Merge `main` into `production`
 5. GitHub Actions connects to Hostinger over SSH
-6. The workflow creates a timestamped backup of the current live whitelisted files
-7. The workflow promotes the staged copy from `public_html/test-git` into `public_html`
+6. The workflow syncs the checked-out production files into `public_html/test-git`
+7. The workflow creates a timestamped backup of the current live whitelisted files
+8. The workflow promotes the staged copy from `public_html/test-git` into `public_html`
 
 ## GitHub setup required
 
@@ -44,5 +45,5 @@ Optional repository variables if you ever need to override the defaults:
 - The promotion is whitelist-based and does not wipe unlisted live files
 - Draft pages are not promoted live
 - The workflow keeps the 5 most recent backups by default
-- Hostinger Git is expected to deploy `main` into the `test-git` install path
+- Hostinger Git may deploy `main` into the `test-git` install path, but the production workflow also refreshes `test-git` from the checked-out production files before promoting live
 - If deployment paths change, update both the workflow and `scripts/promote_hostinger_test_git.sh`

@@ -36,6 +36,24 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -T 15 -p "${HOSTINGER_PORT}" "${HOSTINGER_HOST}" >> ~/.ssh/known_hosts || true
 
+      - name: Sync checkout to Hostinger staging
+        run: |
+          tar -czf - \
+            index.html \
+            about.html \
+            faq.html \
+            proclamation.html \
+            stroke-symptoms.html \
+            what-to-do-during-a-stroke.html \
+            be-fast-vs-fast.html \
+            home.css \
+            pages.css \
+            robots.txt \
+            sitemap.xml \
+            assets \
+            | ssh -p "${HOSTINGER_PORT}" "${HOSTINGER_USER}@${HOSTINGER_HOST}" \
+              "mkdir -p '${LIVE_ROOT}/${STAGING_SUBDIR}' && tar -xzf - -C '${LIVE_ROOT}/${STAGING_SUBDIR}'"
+
       - name: Promote staging to live with backup
         run: |
           chmod +x scripts/promote_hostinger_test_git.sh
